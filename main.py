@@ -248,5 +248,6 @@ class Game:
                 pause = True
 
 if __name__ == "__main__":
+    print('Game start')
     game=Game()
     game.run()
