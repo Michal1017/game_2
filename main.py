@@ -207,7 +207,6 @@ class Game:
             if (self.is_collision(self.obstacles[i].x, self.obstacles[i].y, self.obstacles[i].width,
                                   self.obstacles[i].height, self.hero.x, self.hero.y, self.hero.width,
                                   self.hero.height) == True):
-                print('hej')
                 raise "Game over"
 
         if (self.is_collision(self.end_game.x, self.end_game.y, self.end_game.width, self.end_game.height, self.hero.x,
