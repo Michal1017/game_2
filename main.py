@@ -2,6 +2,7 @@ import pygame
 from pygame.locals import *
 import random
 
+# creating class bomb
 class Bomb:
     def __init__(self,hero,parent_screen):
         self.parent_screen=parent_screen
@@ -15,7 +16,7 @@ class Bomb:
     def draw(self):
         self.parent_screen.blit(self.texture,(self.x,self.y))
 
-
+# shooting fuction for bomb
     def shoot(self):
         if(self.direction=='Right'):
             self.x+=2
@@ -26,6 +27,7 @@ class Bomb:
         if(self.direction=='Down'):
             self.y+=2
 
+# class with screen with is showing when game is ended
 class end_game:
     def __init__(self,parent_screen):
         self.x=960
@@ -38,7 +40,7 @@ class end_game:
     def draw(self):
         self.parent_screen.blit(self.texture,(self.x,self.y))
 
-
+# obstacle class
 class Obstacle:
     def __init__(self,parent_screen):
         self.x=random.randint(100,1000)
@@ -54,6 +56,7 @@ class Obstacle:
     def draw(self):
         self.parent_screen.blit(self.texture,(self.x,self.y))
 
+# fuction which operate moving of obstacles
     def move(self):
         if(self.direction_y==0):
             self.y-=self.speed
@@ -73,7 +76,7 @@ class Obstacle:
             self.direction_x = 1
 
 
-
+# hero class - space ship which we are controlling
 class Hero:
     def __init__(self,parent_screen):
         self.x=0
@@ -85,26 +88,67 @@ class Hero:
         self.direction='Right'
         self.texture=pygame.image.load("resources/statek.png")
         self.bombs=[]
+        self.change_of_direction=False
+        self.last_direction='Right'
 
     def draw(self):
         self.parent_screen.blit(self.texture,(self.x,self.y))
 
-
+# fuctions which operate moving of hero
     def move_up(self):
         self.y-=1
         self.direction='Up'
+        if(self.last_direction!=self.direction):
+            if(self.last_direction=='Right'):
+                pygame.transform.rotate(self.texture,90)
+                print(self.last_direction, ' ', self.direction)
+            if (self.last_direction == 'Left'):
+                pygame.transform.rotate(self.texture, -90)
+            if (self.last_direction == 'Down'):
+                pygame.transform.rotate(self.texture, 180)
+            self.last_direction=self.direction
+
+
     def move_down(self):
         self.y+=1
         self.direction = 'Down'
+        if(self.last_direction!=self.direction):
+            if(self.last_direction=='Right'):
+                pygame.transform.rotate(self.texture,-90)
+            if (self.last_direction == 'Left'):
+                pygame.transform.rotate(self.texture, 90)
+            if (self.last_direction == 'Up'):
+                pygame.transform.rotate(self.texture, 180)
+            self.last_direction=self.direction
     def move_left(self):
         self.x-=1
         self.direction = 'Left'
+        if(self.last_direction!=self.direction):
+            if(self.last_direction=='Right'):
+                pygame.transform.rotate(self.texture,180)
+            if (self.last_direction == 'Up'):
+                pygame.transform.rotate(self.texture, -90)
+            if (self.last_direction == 'Down'):
+                pygame.transform.rotate(self.texture, 90)
+            self.last_direction=self.direction
     def move_right(self):
         self.x+=1
         self.direction = 'Right'
+        if(self.last_direction!=self.direction):
+            if(self.last_direction=='Up'):
+                pygame.transform.rotate(self.texture,90)
+            if (self.last_direction == 'Left'):
+                pygame.transform.rotate(self.texture, 180)
+            if (self.last_direction == 'Down'):
+                pygame.transform.rotate(self.texture, 90)
+            self.last_direction=self.direction
+
+# function which operates shooting
     def shoot(self):
         self.bombs.append(Bomb(self,self.parent_screen))
 
+
+# main class which operates game phisics
 class Game:
     def __init__(self):
         pygame.init()
@@ -123,12 +167,13 @@ class Game:
         self.end_game=end_game(self.surface)
         self.end_game.draw()
 
-
+# function which operates collision between two objects
     def is_collision(self,x1,y1,width1,height1 ,x2,y2,width2,heigt2):
         if (x1 < x2 + width2 and x1 + width1 > x2 and y1 < y2 + heigt2 and height1 + y1 > y2):
             return True
         return False
 
+# functions which operate from which side is collision
     def horizontal_collision(self,x1,width1 ,x2,width2):
         if (x1 < x2 + width2 and x1 + width1 > x2):
             return True
@@ -139,14 +184,23 @@ class Game:
             return True
         return False
 
+
+# function which operates level uping
     def next_level(self):
         self.level+=1
         self.hero.x=0
         self.hero.y=400
-        self.num_obst+=1
+        self.obstacles.clear()
+        self.num_obst=self.level+1
+        for i in range(self.num_obst):
+            obstacle=Obstacle(self.surface)
+            self.obstacles.append(obstacle)
+            self.obstacles[i].draw()
         self.obstacles.append(Obstacle(self.surface))
         for i in range(self.num_obst):
-            self.obstacles[i].speed+=0.5
+            self.obstacles[i].speed+=0.2*i
+            self.obstacles[i].direction_x=random.randint(0,1)
+            self.obstacles[i].direction_y = random.randint(0, 1)
             self.obstacles[i].x=random.randint(100,1000)
             self.obstacles[i].y=random.randint(0,800)
         self.surface.fill((50, 100, 150))
@@ -156,12 +210,14 @@ class Game:
         pygame.display.flip()
         pygame.time.delay(2000)
 
-
+# function which operates displaing score
     def display_score(self):
         font=pygame.font.SysFont('arial',30)
         score=font.render(f"Level: {self.level}",True,(255,255,255))
         self.surface.blit(score,(800,10))
 
+
+# function which operates showing game over screen
     def show_game_over(self):
         self.surface.fill((50, 100, 150))
         font=pygame.font.SysFont('arial',30)
@@ -171,6 +227,8 @@ class Game:
         self.surface.blit(line2,(200,350))
         pygame.display.flip()
 
+
+# function which operates reset game after loose and restarting game
     def reset(self):
         self.num_obst=2
         self.level=1
@@ -181,8 +239,9 @@ class Game:
             self.obstacles.append(obstacle)
 
 
-
+# function which operates gameplay of whole game
     def play(self):
+        #displaing objects
         self.surface.fill((50, 100, 150))
         for i in range(self.num_obst):
             self.obstacles[i].draw()
@@ -194,7 +253,7 @@ class Game:
             self.hero.bombs[i].draw()
             self.hero.bombs[i].shoot()
         pygame.display.flip()
-
+    # opereting collisions
         for i in range(self.num_obst):
             for j in range(len(self.hero.bombs)):
                 if(self.is_collision(self.obstacles[i].x, self.obstacles[i].y, self.obstacles[i].width,
@@ -202,6 +261,8 @@ class Game:
                                   self.hero.bombs[j].height) == True):
 
                     self.hero.bombs.pop(j)
+                    self.obstacles.pop(i)
+                    self.num_obst-=1
 
         for i in range(self.num_obst):
             if (self.is_collision(self.obstacles[i].x, self.obstacles[i].y, self.obstacles[i].width,
@@ -213,7 +274,7 @@ class Game:
                               self.hero.y, self.hero.width, self.hero.height) == True):
             self.next_level()
 
-
+    # contrilling
         keys = pygame.key.get_pressed()
         if keys[pygame.K_UP] and self.hero.y > 0:
             self.hero.move_up()
@@ -225,6 +286,7 @@ class Game:
             self.hero.move_right()
         pygame.time.delay(10)
 
+    #  operating actions apart from main gameplay like quiting game etc.
     def run(self):
         running=True
         pause=False
